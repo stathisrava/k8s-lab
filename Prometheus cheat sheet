@@ -1,0 +1,217 @@
+# PROMETHEUS — BASIC COMMANDS NOTEPAD
+
+## 1. WHAT IS PROMETHEUS?
+Prometheus is a monitoring and time-series database system.
+It collects, stores and queries metrics from Kubernetes and applications.
+
+Prometheus uses PROMQL (Prometheus Query Language).
+
+IMPORTANT:
+- Prometheus queries are NOT Linux commands.
+- Write these queries in the Prometheus web interface.
+- URL: http://localhost:9090
+
+---
+
+## 2. BASIC HEALTH CHECKS
+
+| QUERY | WHAT IT DOES |
+|---|---|
+| `up` | Shows all monitoring targets and their health |
+| `up == 1` | Shows healthy targets |
+| `up == 0` | Shows targets that are down |
+| `prometheus_build_info` | Shows Prometheus build/version information |
+| `scrape_duration_seconds` | Shows how long metric collection takes |
+| `scrape_samples_scraped` | Shows the number of samples scraped |
+
+
+---
+
+## 3. KUBERNETES MONITORING
+
+| QUERY | WHAT IT DOES |
+|---|---|
+| `kube_node_info` | Shows Kubernetes node information |
+| `count(kube_node_info)` | Counts Kubernetes nodes |
+| `kube_pod_info` | Shows pod information |
+| `count(kube_pod_info)` | Counts total pods |
+| `kube_pod_status_phase` | Shows pod lifecycle states |
+| `count(kube_pod_status_phase{phase="Running"} == 1)` | Counts running pods |
+| `kube_namespace_labels` | Shows namespace labels |
+
+---
+
+## 4. CPU MONITORING
+
+Raw CPU metric:
+`node_cpu_seconds_total`
+
+CPU usage percentage:
+```promql
+100 - (avg by (instance) (
+  rate(node_cpu_seconds_total{mode="idle"}[5m])
+) * 100)
+```
+
+WHAT IT DOES:
+Calculates CPU utilization percentage over the last five minutes.
+
+---
+
+## 5. MEMORY MONITORING
+
+Available memory:
+`node_memory_MemAvailable_bytes`
+
+Total memory:
+`node_memory_MemTotal_bytes`
+
+Memory usage percentage:
+```promql
+100 * (
+  1 -
+  node_memory_MemAvailable_bytes /
+  node_memory_MemTotal_bytes
+)
+```
+
+WHAT IT DOES:
+Calculates the percentage of node memory being used.
+
+---
+
+## 6. DISK MONITORING
+
+Available disk:
+`node_filesystem_avail_bytes`
+
+Total disk:
+`node_filesystem_size_bytes`
+
+Disk usage percentage:
+```promql
+100 * (
+  1 -
+  node_filesystem_avail_bytes /
+  node_filesystem_size_bytes
+)
+```
+
+WHAT IT DOES:
+Calculates filesystem usage percentage.
+
+---
+
+## 7. POD & CONTAINER MONITORING
+
+| QUERY | WHAT IT DOES |
+|---|---|
+| `kube_pod_container_status_restarts_total` | Shows container restart counters |
+| `kube_pod_container_status_waiting` | Shows containers waiting |
+| `kube_pod_container_status_terminated` | Shows terminated containers |
+| `container_cpu_usage_seconds_total` | Shows container CPU time |
+| `container_memory_working_set_bytes` | Shows container memory usage |
+
+Container restarts in the last hour:
+```promql
+increase(kube_pod_container_status_restarts_total[1h])
+```
+
+Container CPU usage:
+```promql
+sum by (pod) (
+  rate(container_cpu_usage_seconds_total{container!=""}[5m])
+)
+```
+
+---
+
+## 8. NETWORK MONITORING
+
+Incoming network traffic:
+```promql
+rate(node_network_receive_bytes_total[5m])
+```
+
+Outgoing network traffic:
+```promql
+rate(node_network_transmit_bytes_total[5m])
+```
+
+WHAT THEY DO:
+Calculate network throughput in bytes per second.
+
+---
+
+## 9. IMPORTANT PROMQL FUNCTIONS
+
+| FUNCTION | MEANING |
+|---|---|
+| `rate()` | Calculates average per-second counter increase |
+| `increase()` | Calculates total counter increase over a period |
+| `sum()` | Adds values |
+| `avg()` | Calculates average |
+| `count()` | Counts time series |
+| `max()` | Returns maximum |
+| `min()` | Returns minimum |
+
+Useful operators:
+
+- `[5m]` = last five minutes
+- `[1h]` = last hour
+- `by (pod)` = groups results by pod
+- `== 1` = equals 1
+- `> 80` = greater than 80
+- `!=""` = is not empty
+
+---
+
+## 10. TROUBLESHOOTING WORKFLOW
+
+When investigating a Kubernetes monitoring problem:
+
+1. Check monitoring targets:
+   `up`
+
+2. Check nodes:
+   `kube_node_info`
+
+3. Check pods:
+   `kube_pod_info`
+
+4. Check pod status:
+   `kube_pod_status_phase`
+
+5. Check CPU:
+   `node_cpu_seconds_total`
+
+6. Check memory:
+   `node_memory_MemAvailable_bytes`
+
+7. Check container restarts:
+   `increase(kube_pod_container_status_restarts_total[1h])`
+
+If a query returns no data, check whether the corresponding metric is available and being scraped.
+
+---
+
+## 11. PROMETHEUS VS GRAFANA
+
+PROMETHEUS:
+- Collects metrics.
+- Stores time-series data.
+- Executes PromQL queries.
+- Helps investigate monitoring problems.
+
+GRAFANA:
+- Connects to Prometheus.
+- Uses PromQL queries.
+- Creates graphs and dashboards.
+- Displays CPU, memory, pod and node health.
+
+IMPORTANT:
+Queries executed in Prometheus are not automatically saved.
+Queries in saved Grafana dashboard panels are stored with the dashboard.
+
+
+

@@ -1,0 +1,329 @@
+# GRAFANA — BASIC NOTEPAD
+
+## 1. WHAT IS GRAFANA?
+
+Grafana is a monitoring and visualization platform.
+
+It connects to data sources such as Prometheus and displays their data through dashboards, graphs, charts and tables.
+
+Grafana is used to:
+- Monitor Kubernetes clusters.
+- Visualize CPU and memory usage.
+- Monitor pods and containers.
+- Create dashboards.
+- Configure alerts.
+- Identify performance problems.
+
+Grafana URL:
+http://localhost:3000
+
+Default login (kube-prometheus-stack):
+Username: admin
+Password: Retrieve from Kubernetes secret.
+
+---
+
+## 2. GRAFANA VS PROMETHEUS
+
+PROMETHEUS:
+- Collects metrics.
+- Stores metrics.
+- Executes PromQL queries.
+
+GRAFANA:
+- Connects to Prometheus.
+- Sends PromQL queries to Prometheus.
+- Visualizes the returned data.
+- Saves dashboards and panels.
+
+IMPORTANT:
+You can reuse the same PromQL queries from Prometheus in Grafana.
+
+Grafana does not replace Prometheus.
+
+---
+
+## 3. DATA SOURCES
+
+A data source tells Grafana where to retrieve data.
+
+Our data source:
+Prometheus
+
+With kube-prometheus-stack, Prometheus is normally configured automatically.
+
+To check:
+
+1. Open Grafana.
+2. Go to Connections.
+3. Select Data sources.
+4. Select Prometheus.
+5. Check the connection.
+
+Expected result:
+Successfully queried the Prometheus API.
+
+---
+
+## 4. CREATE A DASHBOARD
+
+Steps:
+
+1. Open Grafana.
+2. Click Dashboards.
+3. Click New.
+4. Select New Dashboard.
+5. Click Add visualization.
+6. Select Prometheus as the data source.
+7. Enter a PromQL query.
+8. Configure the visualization.
+9. Click Apply.
+10. Save the dashboard.
+
+Example dashboard name:
+
+Kubernetes Cluster Overview
+
+---
+
+## 5. VISUALIZATION TYPES
+
+| VISUALIZATION | PURPOSE |
+|---|---|
+| Stat | Displays one important number |
+| Time series | Displays metrics over time |
+| Gauge | Displays a value against a range |
+| Bar chart | Compares values |
+| Table | Displays data in rows and columns |
+| Pie chart | Shows proportions |
+| State timeline | Displays state changes over time |
+| Heatmap | Displays distributions over time |
+
+EXAMPLES:
+
+Stat:
+Total number of Kubernetes pods.
+
+Time series:
+CPU usage over time.
+
+Gauge:
+Memory utilization percentage.
+
+Table:
+Kubernetes pod information.
+
+---
+
+## 6. USEFUL PROMQL QUERIES FOR GRAFANA
+
+These queries are entered inside Grafana's panel query editor.
+
+TOTAL PODS:
+```promql
+count(kube_pod_info)
+```
+
+RUNNING PODS:
+```promql
+count(kube_pod_status_phase{phase="Running"} == 1)
+```
+
+TOTAL NODES:
+```promql
+count(kube_node_info)
+```
+
+CPU USAGE:
+```promql
+100 - (avg by (instance) (
+  rate(node_cpu_seconds_total{mode="idle"}[5m])
+) * 100)
+```
+
+MEMORY USAGE:
+```promql
+100 * (
+  1 -
+  node_memory_MemAvailable_bytes /
+  node_memory_MemTotal_bytes
+)
+```
+
+CONTAINER RESTARTS (LAST HOUR):
+```promql
+sum(increase(kube_pod_container_status_restarts_total[1h]))
+```
+
+PENDING PODS:
+```promql
+count(kube_pod_status_phase{phase="Pending"} == 1)
+```
+
+---
+
+## 7. CONFIGURE A PANEL
+
+Every panel has settings.
+
+IMPORTANT SETTINGS:
+
+Title:
+Give the panel a meaningful name.
+
+Description:
+Explain what the panel monitors.
+
+Data source:
+Select Prometheus.
+
+Query:
+Enter your PromQL expression.
+
+Visualization:
+Choose Stat, Time series, Gauge, Table, etc.
+
+Unit:
+Choose the correct measurement.
+
+Examples:
+- CPU = Percent (0-100)
+- Memory = Bytes (IEC)
+- Network = Bytes/sec
+- Pod count = None
+
+Legend:
+Choose how metric series are identified.
+
+Thresholds:
+Set visual warning levels.
+
+---
+
+## 8. DASHBOARD ORGANIZATION
+
+Recommended dashboards for Kubernetes:
+
+DASHBOARD 1 — KUBERNETES OVERVIEW
+- Total nodes
+- Total pods
+- Running pods
+- Pending pods
+- CPU usage
+- Memory usage
+
+DASHBOARD 2 — NODE MONITORING
+- CPU utilization
+- Memory utilization
+- Disk usage
+- Network traffic
+- System load
+
+DASHBOARD 3 — POD MONITORING
+- Pod status
+- Container restarts
+- CPU per pod
+- Memory per pod
+- Failed pods
+
+DASHBOARD 4 — ALERT MONITORING
+- Active alerts
+- Firing alerts
+- Warning alerts
+- Critical alerts
+
+---
+
+## 9. SAVE AND EXPORT DASHBOARDS
+
+To save:
+1. Open your dashboard.
+2. Click Save dashboard.
+3. Give it a name.
+4. Click Save.
+
+To export:
+1. Open the dashboard.
+2. Open Dashboard settings.
+3. Find JSON Model or Export (depending on Grafana version).
+4. Export the dashboard JSON.
+
+Save exported dashboards in your project:
+
+grafana/dashboards/
+
+JSON exports allow you to back up and reuse dashboard configurations.
+
+---
+
+## 10. ALERTS
+
+Grafana can create alert rules based on Prometheus queries.
+
+Example CPU alert condition:
+
+CPU usage greater than 80%.
+
+Example PromQL:
+```promql
+100 - (avg by (instance) (
+  rate(node_cpu_seconds_total{mode="idle"}[5m])
+) * 100) > 80
+```
+
+Basic alert concepts:
+
+- Alert rule = Defines what to monitor.
+- Threshold = Condition that triggers an alert.
+- Evaluation interval = How frequently the rule is evaluated.
+- Contact point = Where notifications are sent.
+- Notification policy = Determines how alerts are routed.
+
+Note:
+kube-prometheus-stack also includes PrometheusRule and Alertmanager, which provide Kubernetes-native alerting.
+
+---
+
+## 11. GRAFANA TROUBLESHOOTING
+
+If a panel shows NO DATA:
+
+1. Check the Prometheus data source.
+2. Test the query in Prometheus.
+3. Verify that the metric exists.
+4. Check the dashboard time range.
+5. Check the panel query settings.
+
+If Grafana cannot connect to Prometheus:
+
+1. Open Connections.
+2. Select Data sources.
+3. Open Prometheus.
+4. Check the URL and connection status.
+
+If a dashboard is empty:
+
+1. Check the time range.
+2. Check the query.
+3. Check whether Prometheus is scraping metrics.
+
+---
+
+## 12. USEFUL GRAFANA KEYBOARD SHORTCUTS
+
+Keyboard shortcuts vary by Grafana version.
+
+- Ctrl + S = Save dashboard (in supported interfaces).
+- ? = Open keyboard shortcut help (where supported).
+
+---
+
+## 13. IMPORTANT THINGS TO REMEMBER
+
+1. Grafana is NOT a database.
+2. Prometheus stores the metrics.
+3. Grafana retrieves metrics from Prometheus.
+4. PromQL is the query language used in our panels.
+5. Saved dashboards retain their panel queries.
+6. You can reuse the same queries in multiple dashboards.
+7. Dashboard JSON files can be exported and backed up.
