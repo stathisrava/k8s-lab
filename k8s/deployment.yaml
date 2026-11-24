@@ -1,0 +1,18 @@
+apiVersion: apps/v1        # API version (just copy it)
+kind: Deployment           # type: "keep my app running"
+metadata:
+  name: my-cv            # name of this Deployment
+spec:
+  replicas: 3              # how many copies (pods) to keep running
+  selector:
+    matchLabels:
+      app: my-cv         # "manage the pods that have this label"
+  template:                # blueprint for each pod
+    metadata:
+      labels:
+        app: my-cv      # label each pod gets (must match the one above)
+    spec:
+      containers:
+        - name: nginx      # container name (anything you like)
+          image: mycv:v3      # the image you built
+          imagePullPolicy: IfNotPresent

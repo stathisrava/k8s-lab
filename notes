@@ -1,0 +1,22 @@
+EVERY TIME
+1.start Docker
+2.minikube start
+3.kubectl get pods
+4.minikube service my-cv AND LEAVE IT RUNNING
+
+USEFUL
+minikube stop      # shut the cluster down cleanly (keeps your work)
+minikube start     # bring it back
+minikube delete    # wipe the whole cluster and start from scratch
+
+WHEN I CHANGE SOMETHING IN DEPLOYMENT
+kubectl apply -f k8s/deployment.yaml
+kubectl get pods
+
+IF I CHANGE SOMETHING IN THE HTML (I DO VERSION2) 
+My running pods don’t see the change. The HTML is baked into the image, so I have to build a new image and tell Kubernetes to use it.
+Kubernetes then does a rolling update. It starts new pods with v2, waits until they’re ready, and removes the old v1 pods one at a time, so the site never goes down.
+minikube image build -t mycv:v2 ./app
+Change the image line in deployment.yaml: image: mycv:v2
+kubectl apply -f k8s/deployment.yaml
+kubectl get pods

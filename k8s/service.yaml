@@ -1,0 +1,9 @@
+apiVersion: v1            # API version for Services
+kind: Service             # type: "give my app a stable address"
+metadata:
+  name: my-cv          # name of this Service
+spec:
+  selector:
+    app: my-cv          # "send traffic to pods with this label"
+  ports:
+    - port: 80            # Service port (also NGINX's default port)
